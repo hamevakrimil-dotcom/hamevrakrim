@@ -1,5 +1,5 @@
-import React from 'react';
-import { Place, RegionData, SocialLinks } from '../types';
+import React, { useState } from 'react';
+import { Place, RegionData, SocialLinks, Category } from '../types';
 import PlaceCard from './PlaceCard';
 import CallToActionCard from './CallToActionCard';
 import Logo from './Logo';
@@ -13,6 +13,8 @@ interface RegionPageProps {
 }
 
 const RegionPage: React.FC<RegionPageProps> = ({ region, places, onBack, socialLinks }) => {
+  const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
+
   if (!region) {
     return (
         <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center">
@@ -23,6 +25,28 @@ const RegionPage: React.FC<RegionPageProps> = ({ region, places, onBack, socialL
         </div>
     );
   }
+
+  const filteredPlaces = places.filter(place => 
+    activeCategory === 'all' || place.category === activeCategory
+  );
+
+  const FilterButton: React.FC<{
+    label: string;
+    category: Category | 'all';
+    isActive: boolean;
+    onClick: () => void;
+  }> = ({ label, category, isActive, onClick }) => (
+    <button
+      onClick={onClick}
+      className={`px-4 sm:px-6 py-2.5 text-sm sm:text-base font-bold rounded-full transition-all duration-300 transform focus:outline-none focus-visible:ring-2 focus-visible:ring-red-700 focus-visible:ring-opacity-50 ${
+        isActive
+          ? 'bg-red-700 text-white shadow-md shadow-red-600/20'
+          : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-300'
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="bg-stone-50 min-h-screen text-stone-800 flex flex-col">
@@ -43,8 +67,14 @@ const RegionPage: React.FC<RegionPageProps> = ({ region, places, onBack, socialL
                 </p>
             </div>
 
+            <div className="flex justify-center items-center gap-2 sm:gap-4 mb-12 flex-wrap">
+                <FilterButton label="הכל" category="all" isActive={activeCategory === 'all'} onClick={() => setActiveCategory('all')} />
+                <FilterButton label="ספא" category="spa" isActive={activeCategory === 'spa'} onClick={() => setActiveCategory('spa')} />
+                <FilterButton label="אירוח ולינה" category="hotel" isActive={activeCategory === 'hotel'} onClick={() => setActiveCategory('hotel')} />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {places.map((place) => (
+                {filteredPlaces.map((place) => (
                     <PlaceCard key={place.id} place={place} />
                 ))}
                  <CallToActionCard />

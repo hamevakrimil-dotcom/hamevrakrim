@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { Place, Region, RegionData, SocialLinks } from './types';
 import HomePage from './components/HomePage';
@@ -23,7 +23,22 @@ const App: React.FC = () => {
         // Fetch places
         const placesQuery = query(collection(db, 'places'), orderBy('rating', 'desc'));
         const placesSnapshot = await getDocs(placesQuery);
-        const placesList = placesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Place));
+        const placesList = placesSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return { 
+                id: doc.id,
+                name: data.name || 'Sans nom',
+                region: data.region || 'north',
+                category: data.category || 'spa',
+                image: data.image || '',
+                description: data.description || '',
+                location: data.location || '',
+                links: data.links || { website: '#', instagram: '#', video: '#' },
+                tags: data.tags || [],
+                reviewDate: data.reviewDate || '',
+                rating: data.rating || 0
+            } as Place
+        });
         setPlaces(placesList);
 
         // Fetch regions
@@ -33,10 +48,12 @@ const App: React.FC = () => {
         setRegionsData(regionsList);
         
         // Fetch social links
-        const socialLinksSnapshot = await getDocs(collection(db, 'social'));
-        if (!socialLinksSnapshot.empty) {
-            const socialData = socialLinksSnapshot.docs[0].data() as SocialLinks;
-            setSocialLinks(socialData);
+        const socialLinksDocRef = doc(db, 'config', 'socialLinks');
+        const socialLinksDoc = await getDoc(socialLinksDocRef);
+        if (socialLinksDoc.exists()) {
+          setSocialLinks(socialLinksDoc.data() as SocialLinks);
+        } else {
+          console.log("No socialLinks document found in config collection!");
         }
 
       } catch (error) {
