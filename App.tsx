@@ -26,15 +26,16 @@ function App() {
         const snapshot = await getDocs(placesCollection);
         const placesData = snapshot.docs.map(doc => {
           const data = doc.data();
-          // This defensive mapping prevents crashes from incomplete data in Firestore
+          // This highly defensive mapping prevents crashes from incomplete or malformed data in Firestore
           return {
             id: doc.id,
             name: data.name || 'Sans nom',
-            region: data.region || 'north',
-            category: data.category || 'spa',
+            region: ['north', 'center', 'south'].includes(data.region) ? data.region : 'north',
+            category: ['spa', 'hotel'].includes(data.category) ? data.category : 'spa',
             image: data.image || '',
             description: data.description || 'Aucune description',
             location: data.location || '',
+            // This is the crucial fix: ensure `links` is always an object.
             links: {
               website: data.links?.website || '',
               instagram: data.links?.instagram || '',
@@ -48,7 +49,11 @@ function App() {
         setPlaces(placesData);
       } catch (err) {
         console.error("Error fetching places from Firestore:", err);
-        setError("Impossible de charger les informations depuis la base de données.");
+        if (err instanceof Error && 'code' in err && (err as any).code === 'permission-denied') {
+             setError("Erreur de permissions. Veuillez vérifier les règles de sécurité de votre base de données Firestore.");
+        } else {
+            setError("Impossible de charger les informations depuis la base de données.");
+        }
       } finally {
         setLoading(false);
       }
