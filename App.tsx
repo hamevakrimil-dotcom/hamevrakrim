@@ -2,89 +2,76 @@ import React, { useState, useEffect } from 'react';
 import HomePage from './components/HomePage';
 import RegionPage from './components/RegionPage';
 import Footer from './components/Footer';
-import { Region, Place } from './types';
-import { db } from './firebase';
+import { Place, Region } from './types';
+import { getPlaces } from './firebase';
 
 const App: React.FC = () => {
-  const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
+  const [currentPage, setCurrentPage] = useState<Region | 'home'>('home');
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPlaces = async () => {
-      if (!db) {
-        setError("La connexion à la base de données a échoué. Veuillez vérifier la configuration de Firebase.");
-        setLoading(false);
-        return;
-      }
-
+    const fetchPlacesData = async () => {
       try {
         setLoading(true);
-        const placesCollection = db.collection('places');
-        const q = placesCollection.orderBy('rating', 'desc');
-        const placesSnapshot = await q.get();
-        const placesList = placesSnapshot.docs.map(doc => {
-            return { ...doc.data(), id: doc.id } as Place
-        });
-        setPlaces(placesList);
+        const fetchedPlaces = await getPlaces();
+        setPlaces(fetchedPlaces);
         setError(null);
       } catch (err) {
-        console.error("Error fetching places from Firestore:", err);
-        setError("Une erreur est survenue lors du chargement des données. Veuillez réessayer plus tard.");
+        console.error("Error fetching places:", err);
+        setError("Failed to load recommendations. Please check your connection and try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPlaces();
+    fetchPlacesData();
   }, []);
 
-
   const handleSelectRegion = (region: Region) => {
-    window.scrollTo(0, 0);
-    setSelectedRegion(region);
+    setCurrentPage(region);
+    window.scrollTo(0, 0); // Scroll to top on page change
   };
 
   const handleBackToHome = () => {
-    setSelectedRegion(null);
+    setCurrentPage('home');
+    window.scrollTo(0, 0); // Scroll to top on page change
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-red-700 mx-auto"></div>
-          <p className="mt-4 text-lg text-stone-600">טוען המלצות...</p>
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-2xl font-bold text-stone-700 animate-pulse">
+            Loading Recommendations...
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-white p-4">
-        <div className="text-center p-8 bg-red-50 rounded-lg shadow-md max-w-lg mx-auto">
-          <h2 className="text-2xl font-bold text-red-800">אופס! בעיית תצורה</h2>
-          <p className="mt-2 text-red-700">{error}</p>
+    if (error) {
+      return (
+        <div className="flex-grow flex items-center justify-center text-center p-4">
+          <div>
+            <h2 className="text-2xl font-bold text-red-700">Oops! Something went wrong.</h2>
+            <p className="text-stone-600 mt-2">{error}</p>
+          </div>
         </div>
-      </div>
-    );
-  }
-
+      );
+    }
+    
+    if (currentPage === 'home') {
+      return <HomePage onSelectRegion={handleSelectRegion} />;
+    } else {
+      return <RegionPage region={currentPage} places={places} onBack={handleBackToHome} />;
+    }
+  };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <div className="flex-grow">
-        {selectedRegion ? (
-          <RegionPage 
-            region={selectedRegion} 
-            places={places} 
-            onBack={handleBackToHome} 
-          />
-        ) : (
-          <HomePage onSelectRegion={handleSelectRegion} />
-        )}
+    <div className="bg-stone-50 min-h-screen flex flex-col antialiased">
+      <div className="flex-grow flex flex-col">
+        {renderContent()}
       </div>
       <Footer />
     </div>
