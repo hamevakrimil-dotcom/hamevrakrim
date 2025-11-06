@@ -1,16 +1,36 @@
+
+export type Region = 'north' | 'center' | 'south';
+export type Category = 'spa' | 'hotel';
+
 export interface Place {
   id: string;
   name: string;
+  region: Region;
+  category: Category;
   image: string;
-  rating: number;
-  tags: string[];
-  location: string;
-  reviewDate: string;
   description: string;
+  location: string;
   links: {
-    video: string;
     website: string;
+    instagram: string;
+    video: string;
   };
-  region: string;
-  featured?: boolean;
+  tags: string[];
+  reviewDate: string;
+  rating: number;
+}
+
+export interface RegionData {
+    id: Region;
+    name: string;
+    description: string;
+    image: string;
+    sortOrder: number;
+}
+
+export interface SocialLinks {
+    instagramUrl?: string;
+    tiktokUrl?: string;
+    facebookUrl?: string;
+    youtubeUrl?: string;
 }

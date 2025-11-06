@@ -1,84 +1,109 @@
 import React, { useState, useEffect } from 'react';
-import { Place } from '../types';
-import PlaceCard from './PlaceCard';
-import CallToActionCard from './CallToActionCard';
+import { Place, Region, RegionData, SocialLinks } from '../types';
+import Logo from './Logo';
+import Footer from './Footer';
 import FeaturedModal from './FeaturedModal';
-import { PLACES } from '../data/places';
-import { OliveBranchIcon, VerifiedIcon } from './icons';
+import { VerifiedIcon, OliveBranchIcon } from './icons';
 
-const HomePage: React.FC = () => {
-  const [featuredPlace, setFeaturedPlace] = useState<Place | null>(null);
+interface HomePageProps {
+  places: Place[];
+  regionsData: RegionData[];
+  socialLinks: SocialLinks;
+  onSelectRegion: (region: Region) => void;
+  isLoading: boolean;
+}
+
+const RegionCard: React.FC<{ region: RegionData; onClick: () => void }> = ({ region, onClick }) => {
+  return (
+    <div 
+      className="relative rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-500 transform hover:scale-105 hover:shadow-2xl h-96"
+      onClick={onClick}
+    >
+      <img src={region.image} alt={region.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+      <div className="absolute bottom-0 left-0 p-6 text-white w-full">
+        <h3 className="text-3xl md:text-4xl font-bold [text-shadow:0_2px_4px_rgba(0,0,0,0.8)]">{region.name}</h3>
+        <p className="mt-2 text-sm md:text-base opacity-90 [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">{region.description}</p>
+        <div className="mt-4 inline-block bg-red-700 text-white font-bold py-2 px-5 rounded-full group-hover:bg-red-600 transition-colors duration-300">
+          לכל ההמלצות
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const HomePage: React.FC<HomePageProps> = ({ places, regionsData, socialLinks, onSelectRegion, isLoading }) => {
   const [showModal, setShowModal] = useState(false);
+  const [featuredPlace, setFeaturedPlace] = useState<Place | null>(null);
 
   useEffect(() => {
-    const featured = PLACES.find(p => p.featured);
-    if (featured) {
-      setFeaturedPlace(featured);
-      const timer = setTimeout(() => {
-        if (!sessionStorage.getItem('featuredModalShown')) {
+    if (!isLoading && places.length > 0) {
+      const highestRatedPlace = [...places].sort((a, b) => b.rating - a.rating)[0];
+      if (highestRatedPlace) {
+        setFeaturedPlace(highestRatedPlace);
+        const hasSeenModal = sessionStorage.getItem('seenFeaturedModal');
+        if (!hasSeenModal) {
           setShowModal(true);
-          sessionStorage.setItem('featuredModalShown', 'true');
+          sessionStorage.setItem('seenFeaturedModal', 'true');
         }
-      }, 2000); // Show modal after 2 seconds
-      return () => clearTimeout(timer);
+      }
     }
-  }, []);
+  }, [isLoading, places]);
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
-  
-  const regions = [...new Set(PLACES.map(p => p.region))];
+  if (isLoading) {
+    return (
+        <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center transition-opacity duration-300">
+            <Logo />
+            <p className="text-stone-500 mt-4 text-lg">טוענים את ההמלצות השוות ביותר...</p>
+        </div>
+    );
+  }
 
   return (
-    <>
-      <main>
-        {/* Hero Section */}
-        <section className="bg-stone-50 py-16 sm:py-24">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-stone-900 tracking-tight">
-                המקומות ש<span className="text-red-700">באמת</span> שווים ביקור.
-                </h1>
-                <p className="mt-4 sm:mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-stone-600">
-                אנחנו בודקים כל מקום בעצמנו, כדי שאתם תוכלו פשוט ליהנות. בלי פילטרים, בלי שטויות. רק המלצות אמיתיות.
-                </p>
-                <div className="mt-8 flex justify-center gap-x-6 gap-y-4 flex-wrap">
-                    <div className="flex items-center gap-2 text-stone-700">
-                        <VerifiedIcon className="w-5 h-5 text-red-700" />
-                        <span>100% ביקורות מאומתות</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-stone-700">
-                        <OliveBranchIcon className="w-5 h-5 text-red-700" />
-                        <span>ללא תשלום או שיתופי פעולה</span>
-                    </div>
-                </div>
+    <div className="bg-stone-50 min-h-screen text-stone-800">
+      <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
+        <Logo />
+        <a href="mailto:HamevakrimIL@gmail.com " className="font-semibold text-stone-600 hover:text-red-700 transition-colors">
+          צרו קשר
+        </a>
+      </header>
+      
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+        <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 bg-red-100 text-red-800 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
+                <OliveBranchIcon className="w-5 h-5"/>
+                <span>ההמלצות האמיתיות של ישראל</span>
             </div>
-        </section>
+          <h1 className="text-4xl md:text-6xl font-extrabold text-stone-900 tracking-tight leading-tight">
+            מקומות שבאמת שווה להכיר.
+          </h1>
+          <p className="mt-6 text-lg md:text-xl text-stone-600 max-w-2xl mx-auto">
+            עזבו אתכם מביקורות קנויות ודירוגים מזויפים. אנחנו מבקרים בעצמנו בכל מקום, ומביאים לכם רק את ההמלצות שעברו את הבדיקה שלנו. בלי שטויות, רק איכות.
+          </p>
+          <div className="mt-8 flex items-center justify-center gap-3 text-sm text-stone-500">
+              <span className="flex items-center gap-1.5"><VerifiedIcon className="w-5 h-5 text-red-600"/> 100% בדיקה אישית</span>
+              <span className="text-stone-300">|</span>
+              <span className="flex items-center gap-1.5"><VerifiedIcon className="w-5 h-5 text-red-600"/> 0% תוכן ממומן</span>
+          </div>
+        </div>
 
-        {/* Places sections */}
-        <div className="bg-white py-12 sm:py-16">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                {regions.map(region => (
-                    <section key={region} className="mb-16">
-                        <h2 className="text-3xl font-bold text-stone-900 mb-8 border-b-4 border-red-600 pb-2 inline-block">
-                            {region}
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {PLACES.filter(p => p.region === region).map((place) => (
-                                <PlaceCard key={place.id} place={place} />
-                            ))}
-                             {region === regions[regions.length-1] && <CallToActionCard />}
-                        </div>
-                    </section>
-                ))}
-            </div>
+        <div className="mt-16 md:mt-24 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {regionsData.length > 0 ? (
+            regionsData.map((region) => (
+              <RegionCard key={region.id} region={region} onClick={() => onSelectRegion(region.id)} />
+            ))
+          ) : (
+            (['north', 'center', 'south'] as Region[]).map(r => <div key={r} className="bg-stone-200 h-96 rounded-2xl animate-pulse"></div>)
+          )}
         </div>
       </main>
 
+      <Footer socialLinks={socialLinks} />
+
       {showModal && featuredPlace && (
-        <FeaturedModal place={featuredPlace} onClose={handleCloseModal} />
+        <FeaturedModal place={featuredPlace} onClose={() => setShowModal(false)} />
       )}
-    </>
+    </div>
   );
 };
 
