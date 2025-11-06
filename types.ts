@@ -17,5 +17,20 @@ export interface Place {
   };
   tags: string[];
   reviewDate: string;
-  rating: number; // For manual sorting
+  rating: number;
+}
+
+export interface RegionData {
+    id: Region;
+    name: string;
+    description: string;
+    image: string;
+    sortOrder: number;
+}
+
+export interface SocialLinks {
+    instagramUrl?: string;
+    tiktokUrl?: string;
+    facebookUrl?: string;
+    youtubeUrl?: string;
 }
