@@ -1,89 +1,110 @@
-import React from 'react';
-import { Region } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Place, Region } from '../types';
+import Logo from './Logo';
+import Footer from './Footer';
+import FeaturedModal from './FeaturedModal';
+import { VerifiedIcon, OliveBranchIcon } from './icons';
 
 interface HomePageProps {
+  places: Place[];
   onSelectRegion: (region: Region) => void;
+  isLoading: boolean;
 }
 
-const regions: { id: Region; name: string; image: string; description: string }[] = [
-  { id: 'north', name: 'צפון', image: 'https://picsum.photos/seed/banias_stream/800/1000', description: 'נופים ירוקים, אוויר צלול וחוויות גליליות' },
-  { id: 'center', name: 'מרכז', image: 'https://picsum.photos/seed/tel_aviv_coast/800/1000', description: 'הלב הפועם של ישראל, מלא באנרגיה אורבנית' },
-  { id: 'south', name: 'דרום', image: 'https://picsum.photos/seed/ramon_crater_view/800/1000', description: 'מרחבים מדבריים, שקט אינסופי וצבעים חמים' },
-];
+const regionData = {
+  north: { name: 'צפון', image: 'https://picsum.photos/seed/north_israel/800/600', description: 'נופים ירוקים, אוויר צלול והרבה שלווה. גלו את ההמלצות שלנו לגליל, לגולן ולעמקים.' },
+  center: { name: 'מרכז', image: 'https://picsum.photos/seed/center_israel/800/600', description: 'הלב הפועם של ישראל, מלא באנרגיה, תרבות וקולינריה. מצאו את המקומות שלא תרצו לפספס.' },
+  south: { name: 'דרום', image: 'https://picsum.photos/seed/south_israel/800/600', description: 'מדבר עוצמתי, ים אדום וחוויות בלתי נשכחות. בואו לראות מה מסתתר מעבר לחולות.' },
+};
 
-const HomePage: React.FC<HomePageProps> = ({ onSelectRegion }) => {
-  const handleKeyDown = (e: React.KeyboardEvent, regionId: Region) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault(); // Prevent scrolling on spacebar press
-      onSelectRegion(regionId);
-    }
-  };
-  
+const RegionCard: React.FC<{ region: Region; onClick: () => void }> = ({ region, onClick }) => {
+  const data = regionData[region];
   return (
-    <>
-    <div className="flex flex-col items-center p-4 sm:p-6">
-      <header className="text-center pt-12 pb-8 md:pt-16 md:pb-12 w-full max-w-4xl mx-auto">
-        <div className="flex flex-col items-center gap-6 animate-fade-in" style={{ animationDuration: '0.8s' }}>
-          <div className="bg-red-700 py-4 px-8 rounded-2xl shadow-lg shadow-red-600/20 inline-block">
-            <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-bold tracking-tighter">
-              המבקרים!
-            </h1>
-          </div>
-          <h2 className="mt-6 text-stone-900 text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
-            ההמלצות שלנו - כי רק מה שטוב באמת נכנס לפה
-          </h2>
+    <div 
+      className="relative rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-500 transform hover:scale-105 hover:shadow-2xl"
+      onClick={onClick}
+    >
+      <img src={data.image} alt={data.name} className="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-110" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+      <div className="absolute bottom-0 left-0 p-6 text-white w-full">
+        <h3 className="text-3xl md:text-4xl font-bold [text-shadow:0_2px_4px_rgba(0,0,0,0.8)]">{data.name}</h3>
+        <p className="mt-2 text-sm md:text-base opacity-90 [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">{data.description}</p>
+        <div className="mt-4 inline-block bg-red-700 text-white font-bold py-2 px-5 rounded-full group-hover:bg-red-600 transition-colors duration-300">
+          לכל ההמלצות
         </div>
-        
-        <p className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-stone-600 animate-fade-in" style={{ animationDuration: '0.8s', animationDelay: '200ms' }}>
-            גלו את מיטב מתחמי הספא והמלונות בישראל, דרך העיניים שלנו. כל המלצה נבדקה בקפידה כדי להבטיח לכם את החוויה המושלמת.
-        </p>
-      </header>
+      </div>
+    </div>
+  );
+};
 
-      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 md:pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            {regions.map((region) => (
-            <div
-                key={region.id}
-                onClick={() => onSelectRegion(region.id)}
-                onKeyDown={(e) => handleKeyDown(e, region.id)}
-                role="button"
-                tabIndex={0}
-                aria-label={`בחר אזור ${region.name}`}
-                className="rounded-2xl overflow-hidden cursor-pointer group relative h-[400px] sm:h-[450px] border border-stone-200 hover:border-red-700/80 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-red-600/10 hover:-translate-y-2 focus:outline-none focus-visible:ring-4 focus-visible:ring-red-700 focus-visible:ring-offset-2"
-            >
-                <img 
-                    src={region.image} 
-                    alt={region.name} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-white flex flex-col justify-end h-full">
-                    <div>
-                        <h3 className="text-4xl sm:text-5xl font-bold [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">{region.name}</h3>
-                        <p className="mt-2 text-base sm:text-lg opacity-90 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">{region.description}</p>
-                        <div className="mt-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-y-0 translate-y-4">
-                            <span className="inline-block bg-red-700 text-white font-semibold py-2 px-4 rounded-md shadow-lg shadow-red-600/20">
-                                לכל ההמלצות &rarr;
-                            </span>
-                        </div>
-                    </div>
-                </div>
+const HomePage: React.FC<HomePageProps> = ({ places, onSelectRegion, isLoading }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [featuredPlace, setFeaturedPlace] = useState<Place | null>(null);
+
+  useEffect(() => {
+    if (!isLoading && places.length > 0) {
+      const highestRatedPlace = [...places].sort((a, b) => b.rating - a.rating)[0];
+      if (highestRatedPlace) {
+        setFeaturedPlace(highestRatedPlace);
+        const hasSeenModal = sessionStorage.getItem('seenFeaturedModal');
+        if (!hasSeenModal) {
+          setShowModal(true);
+          sessionStorage.setItem('seenFeaturedModal', 'true');
+        }
+      }
+    }
+  }, [isLoading, places]);
+
+  if (isLoading) {
+    return (
+        <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center transition-opacity duration-300">
+            <Logo />
+            <p className="text-stone-500 mt-4 text-lg">טוענים את ההמלצות השוות ביותר...</p>
+        </div>
+    );
+  }
+
+  return (
+    <div className="bg-stone-50 min-h-screen text-stone-800">
+      <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
+        <Logo />
+        <a href="mailto:HamevakrimIL@gmail.com " className="font-semibold text-stone-600 hover:text-red-700 transition-colors">
+          צרו קשר
+        </a>
+      </header>
+      
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+        <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 bg-red-100 text-red-800 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
+                <OliveBranchIcon className="w-5 h-5"/>
+                <span>ההמלצות האמיתיות של ישראל</span>
             </div>
-            ))}
+          <h1 className="text-4xl md:text-6xl font-extrabold text-stone-900 tracking-tight leading-tight">
+            מקומות שבאמת שווה להכיר.
+          </h1>
+          <p className="mt-6 text-lg md:text-xl text-stone-600 max-w-2xl mx-auto">
+            עזבו אתכם מביקורות קנויות ודירוגים מזויפים. אנחנו מבקרים בעצמנו בכל מקום, ומביאים לכם רק את ההמלצות שעברו את הבדיקה שלנו. בלי שטויות, רק איכות.
+          </p>
+          <div className="mt-8 flex items-center justify-center gap-3 text-sm text-stone-500">
+              <span className="flex items-center gap-1.5"><VerifiedIcon className="w-5 h-5 text-red-600"/> 100% בדיקה אישית</span>
+              <span className="text-stone-300">|</span>
+              <span className="flex items-center gap-1.5"><VerifiedIcon className="w-5 h-5 text-red-600"/> 0% תוכן ממומן</span>
+          </div>
+        </div>
+
+        <div className="mt-16 md:mt-24 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {(['north', 'center', 'south'] as Region[]).map((region) => (
+            <RegionCard key={region} region={region} onClick={() => onSelectRegion(region)} />
+          ))}
         </div>
       </main>
+
+      <Footer />
+
+      {showModal && featuredPlace && (
+        <FeaturedModal place={featuredPlace} onClose={() => setShowModal(false)} />
+      )}
     </div>
-    <style>{`
-      @keyframes fade-in {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .animate-fade-in {
-        animation: fade-in ease-in-out forwards;
-        opacity: 0;
-      }
-    `}</style>
-    </>
   );
 };
 
