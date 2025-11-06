@@ -4,8 +4,6 @@ import RegionPage from './components/RegionPage';
 import Footer from './components/Footer';
 import { Region, Place } from './types';
 import { db } from './firebase';
-// FIX: Remove unused v9 imports. The logic is now using v8 compat syntax.
-// import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 
 const App: React.FC = () => {
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
@@ -15,26 +13,26 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchPlaces = async () => {
+      // Vérifie si l'instance de la base de données a été correctement initialisée
+      if (!db) {
+        setError("La configuration de Firebase est manquante. Assurez-vous d'avoir bien configuré vos variables d'environnement VITE_ sur Vercel et que la commande de build est bien `bash create-config.sh`.");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        // Basic check if firebase config is provided.
-        // Environment variables must be prefixed with VITE_ to be exposed to the browser.
-        if (!process.env.VITE_FIREBASE_PROJECT_ID) {
-          throw new Error("Firebase configuration is missing. Make sure to set up your environment variables with the VITE_ prefix.");
-        }
-        // FIX: Update Firestore query to use v8 compat syntax.
         const placesCollection = db.collection('places');
         const q = placesCollection.orderBy('rating', 'desc');
         const placesSnapshot = await q.get();
         const placesList = placesSnapshot.docs.map(doc => {
-            // Note: Ensure your Firestore documents match the 'Place' type structure.
             return { ...doc.data(), id: doc.id } as Place
         });
         setPlaces(placesList);
         setError(null);
       } catch (err) {
         console.error("Error fetching places from Firestore:", err);
-        setError("לא ניתן היה לטעון את המידע. אנא ודאו שמשתני הסביבה (environment variables) שלכם מתחילים בקידומת 'VITE_'.");
+        setError("Une erreur est survenue lors du chargement des données. Veuillez réessayer plus tard.");
       } finally {
         setLoading(false);
       }
@@ -67,12 +65,9 @@ const App: React.FC = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white p-4">
-        <div className="text-center p-8 bg-red-50 rounded-lg shadow-md max-w-md">
-          <h2 className="text-2xl font-bold text-red-800">אופס! משהו השתבש</h2>
+        <div className="text-center p-8 bg-red-50 rounded-lg shadow-md max-w-md mx-auto">
+          <h2 className="text-2xl font-bold text-red-800">אופס! בעיית תצורה</h2>
           <p className="mt-2 text-red-700">{error}</p>
-          <p className="mt-4 text-sm text-stone-600">
-            לדוגמה, המשתנה <code>FIREBASE_PROJECT_ID</code> צריך להיקרא <code>VITE_FIREBASE_PROJECT_ID</code>.
-          </p>
         </div>
       </div>
     );
