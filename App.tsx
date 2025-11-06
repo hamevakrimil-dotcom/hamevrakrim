@@ -14,7 +14,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchPlaces = async () => {
       if (!db) {
-        setError("La configuration de Firebase semble échouer. C'est généralement dû à un problème de configuration sur Vercel. **Veuillez vérifier les logs de 'Build' sur votre déploiement Vercel.** Assurez-vous que (1) les 7 variables d'environnement VITE_... sont présentes et (2) que la commande de build est bien `bash create-config.sh`.");
+        setError("La connexion à la base de données a échoué. Veuillez vérifier la configuration de Firebase.");
         setLoading(false);
         return;
       }
