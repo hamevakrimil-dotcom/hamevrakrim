@@ -24,10 +24,27 @@ function App() {
       try {
         const placesCollection = collection(db, 'places');
         const snapshot = await getDocs(placesCollection);
-        const placesData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        } as Place));
+        const placesData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          // This defensive mapping prevents crashes from incomplete data in Firestore
+          return {
+            id: doc.id,
+            name: data.name || 'Sans nom',
+            region: data.region || 'north',
+            category: data.category || 'spa',
+            image: data.image || '',
+            description: data.description || 'Aucune description',
+            location: data.location || '',
+            links: {
+              website: data.links?.website || '',
+              instagram: data.links?.instagram || '',
+              video: data.links?.video || '',
+            },
+            tags: Array.isArray(data.tags) ? data.tags : [],
+            reviewDate: data.reviewDate || '',
+            rating: typeof data.rating === 'number' ? data.rating : 0,
+          } as Place;
+        });
         setPlaces(placesData);
       } catch (err) {
         console.error("Error fetching places from Firestore:", err);

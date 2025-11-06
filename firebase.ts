@@ -1,6 +1,6 @@
 // Fix(firebase): The reference to "vite/client" was removed as it was not being found.
-// Using a namespace import for firebase/app to work around module resolution issues.
-import * as firebaseApp from 'firebase/app';
+// Fix(firebase): Corrected Firebase import to use a named import for `initializeApp`.
+import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 // Configuration de Firebase à partir des variables d'environnement
@@ -20,8 +20,8 @@ let db;
 
 // Vérifie que les clés sont présentes avant d'initialiser
 if (firebaseConfig.apiKey) {
-  // Fix(firebase): Use initializeApp from the namespace import.
-  app = firebaseApp.initializeApp(firebaseConfig);
+  // Fix(firebase): Call `initializeApp` directly after being imported.
+  app = initializeApp(firebaseConfig);
   db = getFirestore(app);
 } else {
   console.error("Firebase config is missing. Make sure to set up your environment variables with the VITE_ prefix.");
