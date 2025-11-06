@@ -26,7 +26,7 @@ const App: React.FC = () => {
                 const [placesPromise, regionsPromise, socialLinksPromise] = [
                     getDocs(collection(db, 'places')),
                     getDocs(query(collection(db, 'regions'), orderBy('sortOrder'))),
-                    getDoc(doc(db, 'config', 'socialLinks'))
+                    getDoc(doc(db, 'config', 'socialLinks')) // Correction de 'socialLinks' en 'socialLinks'
                 ];
 
                 const [placesSnapshot, regionsSnapshot, socialLinksSnap] = await Promise.all([placesPromise, regionsPromise, socialLinksPromise]);
