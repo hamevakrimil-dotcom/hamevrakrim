@@ -13,9 +13,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchPlaces = async () => {
-      // Vérifie si l'instance de la base de données a été correctement initialisée
       if (!db) {
-        setError("La configuration de Firebase est manquante. Assurez-vous d'avoir bien configuré vos variables d'environnement VITE_ sur Vercel et que la commande de build est bien `bash create-config.sh`.");
+        setError("La configuration de Firebase semble échouer. C'est généralement dû à un problème de configuration sur Vercel. **Veuillez vérifier les logs de 'Build' sur votre déploiement Vercel.** Assurez-vous que (1) les 7 variables d'environnement VITE_... sont présentes et (2) que la commande de build est bien `bash create-config.sh`.");
         setLoading(false);
         return;
       }
@@ -65,7 +64,7 @@ const App: React.FC = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white p-4">
-        <div className="text-center p-8 bg-red-50 rounded-lg shadow-md max-w-md mx-auto">
+        <div className="text-center p-8 bg-red-50 rounded-lg shadow-md max-w-lg mx-auto">
           <h2 className="text-2xl font-bold text-red-800">אופס! בעיית תצורה</h2>
           <p className="mt-2 text-red-700">{error}</p>
         </div>
