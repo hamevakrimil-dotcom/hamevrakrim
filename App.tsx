@@ -1,79 +1,59 @@
 import React, { useState, useEffect } from 'react';
+import { Region } from './types';
+import { places } from './data/places';
 import HomePage from './components/HomePage';
 import RegionPage from './components/RegionPage';
 import Footer from './components/Footer';
-import { Place, Region } from './types';
-import { getPlaces } from './firebase';
+import FeaturedModal from './components/FeaturedModal';
 
+// Fix: Created the main App component, which was missing. This component handles routing between the home page and region-specific pages.
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<Region | 'home'>('home');
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
+  const [showFeaturedModal, setShowFeaturedModal] = useState(false);
+  
+  // Show featured modal on first visit (using session storage)
   useEffect(() => {
-    const fetchPlacesData = async () => {
-      try {
-        setLoading(true);
-        const fetchedPlaces = await getPlaces();
-        setPlaces(fetchedPlaces);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching places from Firestore:", err);
-        setError("Impossible de charger les recommandations. Veuillez vérifier votre connexion et réessayer.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPlacesData();
+    const hasSeenModal = sessionStorage.getItem('hasSeenFeaturedModal');
+    if (!hasSeenModal) {
+      setTimeout(() => {
+        setShowFeaturedModal(true);
+        sessionStorage.setItem('hasSeenFeaturedModal', 'true');
+      }, 2000); // Delay for effect
+    }
   }, []);
 
   const handleSelectRegion = (region: Region) => {
-    setCurrentPage(region);
-    window.scrollTo(0, 0); // Scroll to top on page change
+    setSelectedRegion(region);
+    window.scrollTo(0, 0);
   };
 
-  const handleBackToHome = () => {
-    setCurrentPage('home');
-    window.scrollTo(0, 0); // Scroll to top on page change
+  const handleBack = () => {
+    setSelectedRegion(null);
+    window.scrollTo(0, 0);
   };
 
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <div className="flex-grow flex items-center justify-center">
-          <div className="text-2xl font-bold text-stone-700 animate-pulse">
-            טוען המלצות...
-          </div>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="flex-grow flex items-center justify-center text-center p-4">
-          <div>
-            <h2 className="text-2xl font-bold text-red-700">אופס! משהו השתבש.</h2>
-            <p className="text-stone-600 mt-2">{error}</p>
-          </div>
-        </div>
-      );
-    }
-    
-    if (currentPage === 'home') {
-      return <HomePage onSelectRegion={handleSelectRegion} />;
-    } else {
-      return <RegionPage region={currentPage} places={places} onBack={handleBackToHome} />;
-    }
-  };
+  const featuredPlace = places.find(p => p.rating >= 5.0) || places[0];
 
   return (
-    <div className="bg-stone-50 min-h-screen flex flex-col antialiased">
-      <div className="flex-grow flex flex-col">
-        {renderContent()}
+    <div className="bg-stone-50 min-h-screen flex flex-col font-sans">
+      <div className="flex-grow">
+        {selectedRegion ? (
+          <RegionPage 
+            region={selectedRegion} 
+            places={places} 
+            onBack={handleBack} 
+          />
+        ) : (
+          <HomePage onSelectRegion={handleSelectRegion} />
+        )}
       </div>
       <Footer />
+      {showFeaturedModal && featuredPlace && (
+        <FeaturedModal 
+          place={featuredPlace} 
+          onClose={() => setShowFeaturedModal(false)}
+        />
+      )}
     </div>
   );
 };
