@@ -1,3 +1,6 @@
+// Fix: Implemented the main App component to handle routing and state management.
+// This resolves the errors caused by placeholder content in this file
+// and the resulting module resolution error in index.tsx.
 import React, { useState, useEffect } from 'react';
 import { Region } from './types';
 import { places } from './data/places';
@@ -6,56 +9,59 @@ import RegionPage from './components/RegionPage';
 import Footer from './components/Footer';
 import FeaturedModal from './components/FeaturedModal';
 
-// Fix: Created the main App component, which was missing. This component handles routing between the home page and region-specific pages.
-const App: React.FC = () => {
+// Find the most featured place (highest rating) to show in the modal
+const featuredPlace = [...places].sort((a, b) => b.rating - a.rating)[0];
+
+function App() {
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
   const [showFeaturedModal, setShowFeaturedModal] = useState(false);
-  
-  // Show featured modal on first visit (using session storage)
+
+  // Show a featured modal on the first visit of a session
   useEffect(() => {
-    const hasSeenModal = sessionStorage.getItem('hasSeenFeaturedModal');
-    if (!hasSeenModal) {
-      setTimeout(() => {
+    const timer = setTimeout(() => {
+      if (!sessionStorage.getItem('featuredModalShown')) {
         setShowFeaturedModal(true);
-        sessionStorage.setItem('hasSeenFeaturedModal', 'true');
-      }, 2000); // Delay for effect
-    }
+        sessionStorage.setItem('featuredModalShown', 'true');
+      }
+    }, 3000); // 3-second delay
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSelectRegion = (region: Region) => {
     setSelectedRegion(region);
-    window.scrollTo(0, 0);
+    window.scrollTo(0, 0); // Scroll to top on page change
   };
 
   const handleBack = () => {
     setSelectedRegion(null);
-    window.scrollTo(0, 0);
+    window.scrollTo(0, 0); // Scroll to top on page change
   };
 
-  const featuredPlace = places.find(p => p.rating >= 5.0) || places[0];
+  const handleCloseModal = () => {
+    setShowFeaturedModal(false);
+  };
 
   return (
-    <div className="bg-stone-50 min-h-screen flex flex-col font-sans">
+    <div className="bg-stone-50 min-h-screen flex flex-col font-sans text-stone-800">
       <div className="flex-grow">
         {selectedRegion ? (
-          <RegionPage 
-            region={selectedRegion} 
-            places={places} 
-            onBack={handleBack} 
+          <RegionPage
+            region={selectedRegion}
+            places={places}
+            onBack={handleBack}
           />
         ) : (
           <HomePage onSelectRegion={handleSelectRegion} />
         )}
       </div>
       <Footer />
+
       {showFeaturedModal && featuredPlace && (
-        <FeaturedModal 
-          place={featuredPlace} 
-          onClose={() => setShowFeaturedModal(false)}
-        />
+        <FeaturedModal place={featuredPlace} onClose={handleCloseModal} />
       )}
     </div>
   );
-};
+}
 
 export default App;
