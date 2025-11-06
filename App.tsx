@@ -4,6 +4,7 @@ import RegionPage from './components/RegionPage';
 import Footer from './components/Footer';
 import FeaturedModal from './components/FeaturedModal';
 import { db } from './firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import { Place, Region } from './types';
 
 function App() {
@@ -16,12 +17,13 @@ function App() {
   useEffect(() => {
     const fetchPlaces = async () => {
       if (!db) {
-        setError("La configuration de Firebase est manquante ou incorrecte. Veuillez vérifier le fichier firebaseConfig.js.");
+        setError("La configuration de Firebase est manquante. Assurez-vous d'avoir configuré vos variables d'environnement sur Vercel.");
         setLoading(false);
         return;
       }
       try {
-        const snapshot = await db.collection('places').get();
+        const placesCollection = collection(db, 'places');
+        const snapshot = await getDocs(placesCollection);
         const placesData = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
@@ -60,7 +62,7 @@ function App() {
     window.scrollTo(0, 0);
   };
   
-  const featuredPlace = places.find(p => p.rating >= 5.0) || places[0];
+  const featuredPlace = places.find(p => p.rating >= 9.8) || places[0];
 
   if (loading) {
     return (
