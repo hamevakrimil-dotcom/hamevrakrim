@@ -19,8 +19,8 @@ const App: React.FC = () => {
         setPlaces(fetchedPlaces);
         setError(null);
       } catch (err) {
-        console.error("Error fetching places:", err);
-        setError("Failed to load recommendations. Please check your connection and try again.");
+        console.error("Error fetching places from Firestore:", err);
+        setError("Impossible de charger les recommandations. Veuillez vérifier votre connexion et réessayer.");
       } finally {
         setLoading(false);
       }
@@ -44,7 +44,7 @@ const App: React.FC = () => {
       return (
         <div className="flex-grow flex items-center justify-center">
           <div className="text-2xl font-bold text-stone-700 animate-pulse">
-            Loading Recommendations...
+            טוען המלצות...
           </div>
         </div>
       );
@@ -54,7 +54,7 @@ const App: React.FC = () => {
       return (
         <div className="flex-grow flex items-center justify-center text-center p-4">
           <div>
-            <h2 className="text-2xl font-bold text-red-700">Oops! Something went wrong.</h2>
+            <h2 className="text-2xl font-bold text-red-700">אופס! משהו השתבש.</h2>
             <p className="text-stone-600 mt-2">{error}</p>
           </div>
         </div>
