@@ -1,112 +1,98 @@
 import React, { useState, useEffect } from 'react';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, orderBy, query } from 'firebase/firestore';
 import { Place, Region, RegionData, SocialLinks } from './types';
 import HomePage from './components/HomePage';
 import RegionPage from './components/RegionPage';
 
 const App: React.FC = () => {
-    const [places, setPlaces] = useState<Place[]>([]);
-    const [regionsData, setRegionsData] = useState<RegionData[]>([]);
-    const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [regionsData, setRegionsData] = useState<RegionData[]>([]);
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
+  const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!db) {
-                console.error("Firestore not initialized");
-                setError("La connexion à la base de données a échoué.");
-                setIsLoading(false);
-                return;
-            }
-            try {
-                // Fetch all data concurrently for better performance
-                const [placesPromise, regionsPromise, socialLinksPromise] = [
-                    getDocs(collection(db, 'places')),
-                    getDocs(query(collection(db, 'regions'), orderBy('sortOrder'))),
-                    getDoc(doc(db, 'config', 'socialLinks')) // Correction de 'socialLinks' en 'socialLinks'
-                ];
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!db) {
+        console.error("Firestore is not initialized.");
+        setIsLoading(false);
+        return;
+      }
+      try {
+        // Fetch places
+        const placesQuery = query(collection(db, 'places'), orderBy('rating', 'desc'));
+        const placesSnapshot = await getDocs(placesQuery);
+        const placesList = placesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Place));
+        setPlaces(placesList);
 
-                const [placesSnapshot, regionsSnapshot, socialLinksSnap] = await Promise.all([placesPromise, regionsPromise, socialLinksPromise]);
+        // Fetch regions
+        const regionsQuery = query(collection(db, 'regions'), orderBy('sortOrder'));
+        const regionsSnapshot = await getDocs(regionsQuery);
+        const regionsList = regionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RegionData));
+        setRegionsData(regionsList);
+        
+        // Fetch social links
+        const socialLinksSnapshot = await getDocs(collection(db, 'social'));
+        if (!socialLinksSnapshot.empty) {
+            const socialData = socialLinksSnapshot.docs[0].data() as SocialLinks;
+            setSocialLinks(socialData);
+        }
 
-                // Process places
-                const placesList = placesSnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    // Robust data parsing with defaults
-                    return {
-                        id: doc.id,
-                        name: data.name || 'Sans nom',
-                        region: data.region || 'north',
-                        category: data.category || 'spa',
-                        image: data.image || '',
-                        description: data.description || 'Aucune description.',
-                        location: data.location || 'Lieu non spécifié',
-                        links: {
-                            website: data.links?.website || '#',
-                            instagram: data.links?.instagram || '#',
-                            video: data.links?.video || '#',
-                        },
-                        tags: data.tags || [],
-                        reviewDate: data.reviewDate || 'N/A',
-                        rating: data.rating || 0,
-                    } as Place;
-                });
-                setPlaces(placesList);
-                
-                // Process regions
-                const regionsList = regionsSnapshot.docs.map(doc => ({
-                    id: doc.id as Region,
-                    ...doc.data()
-                } as RegionData));
-                setRegionsData(regionsList);
-
-                // Process social links
-                if (socialLinksSnap.exists()) {
-                    setSocialLinks(socialLinksSnap.data() as SocialLinks);
-                }
-
-            } catch (error) {
-                console.error("Error fetching data from Firestore:", error);
-                setError("Les informations n'ont pas pu être chargées. Veuillez vérifier vos règles de sécurité Firestore.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
-
-    const handleSelectRegion = (region: Region) => {
-        setSelectedRegion(region);
+      } catch (error) {
+        console.error("Error fetching data from Firestore:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    const handleBackToHome = () => {
-        setSelectedRegion(null);
-    };
+    fetchData();
+  }, []);
+
+  const handleSelectRegion = (region: Region) => {
+    window.scrollTo(0, 0);
+    setSelectedRegion(region);
+  };
+
+  const handleBackToHome = () => {
+    window.scrollTo(0, 0);
+    setSelectedRegion(null);
+  };
+
+  if (selectedRegion) {
+    const regionInfo = regionsData.find(r => r.id === selectedRegion);
+    const filteredPlaces = places.filter(p => p.region === selectedRegion);
     
-    if (error) {
+    if (!regionInfo) {
         return (
-            <div className="min-h-screen bg-red-50 flex flex-col items-center justify-center p-4 text-center">
-                <h1 className="text-3xl font-bold text-red-700">Oups ! Une erreur s'est produite.</h1>
-                <p className="mt-4 text-red-600">{error}</p>
-                <p className="mt-2 text-sm text-stone-500">Essayez de rafraîchir la page.</p>
+            <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center">
+                <p className="text-stone-500 text-lg">טוען נתונים או שאירעה שגיאה...</p>
+                <button onClick={handleBackToHome} className="mt-4 bg-red-700 text-white font-bold py-2 px-5 rounded-full hover:bg-red-600 transition-colors duration-300">
+                    חזרה
+                </button>
             </div>
         );
     }
-
-    if (selectedRegion) {
-        return <RegionPage region={selectedRegion} places={places} onBack={handleBackToHome} />;
-    }
-
-    return <HomePage 
-        places={places} 
-        regionsData={regionsData}
+      
+    return (
+      <RegionPage
+        region={regionInfo}
+        places={filteredPlaces}
+        onBack={handleBackToHome}
         socialLinks={socialLinks}
-        onSelectRegion={handleSelectRegion} 
-        isLoading={isLoading} 
-    />;
+      />
+    );
+  }
+
+  return (
+    <HomePage
+      places={places}
+      regionsData={regionsData}
+      socialLinks={socialLinks}
+      onSelectRegion={handleSelectRegion}
+      isLoading={isLoading}
+    />
+  );
 };
 
 export default App;
